@@ -3,9 +3,15 @@ from color_recognition import ColorRecognition
 
 
 def main():
-    lower_red = [0, 100, 100]
-    upper_red = [10, 255, 255]
-    cr = ColorRecognition(lower_red, upper_red)
+    color_bounds = [
+        ([0, 100, 100], [10, 255, 255]), # Red
+        ([94, 80, 2], [126, 255, 255]), # Blue
+        ([25, 52, 72], [102, 255, 255]), # Yellow
+        ([35, 52, 72], [85, 255, 255]), # Green
+        ([0, 0, 0], [180, 255, 30]) # Black
+    ]
+
+    cr = ColorRecognition(color_bounds)
     cap = cv2.VideoCapture(0)
 
     while cap.isOpened():
@@ -16,7 +22,7 @@ def main():
         cv2.imshow("Webcam", frame)
 
         processed_frame = cr.detect_color(frame)
-        cv2.imshow("Frame with Contours", processed_frame)
+        cv2.imshow("Detected Colors", processed_frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
