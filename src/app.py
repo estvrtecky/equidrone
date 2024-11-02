@@ -1,4 +1,5 @@
 import cv2
+import json
 import tkinter as tk
 from threading import Thread
 from .color_recognition import ColorRecognition
@@ -31,13 +32,8 @@ class App:
             self.thread.join()
 
     def run_detection(self):
-        color_bounds = [
-            ([0, 100, 100], [10, 255, 255]), # Red
-            ([94, 80, 2], [126, 255, 255]), # Blue
-            ([25, 52, 72], [102, 255, 255]), # Yellow
-            ([35, 52, 72], [85, 255, 255]), # Green
-            ([0, 0, 0], [180, 255, 30]) # Black
-        ]
+        with open("src/color_bounds.json", "r") as file:
+            color_bounds = json.load(file)
 
         cr = ColorRecognition(color_bounds)
         cap = cv2.VideoCapture(0)

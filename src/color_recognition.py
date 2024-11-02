@@ -4,7 +4,7 @@ import numpy as np
 
 class ColorRecognition:
     def __init__(self, color_bounds: list):
-        self.color_bounds = [(np.array(lower), np.array(upper)) for lower, upper in color_bounds]
+        self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in color_bounds]
 
     def detect_color(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
