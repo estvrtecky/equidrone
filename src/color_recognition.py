@@ -1,10 +1,18 @@
 import cv2
+import json
 import numpy as np
 
 
 class ColorRecognition:
-    def __init__(self, color_bounds: list):
-        self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in color_bounds]
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+        self.load_color_bounds()
+
+    def load_color_bounds(self) -> None:
+        with open(self.file_path, "r") as file:
+            data = json.load(file)
+            self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in data]
+            self.color_names = [color["name"] for color in data]
 
     def detect_color(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)

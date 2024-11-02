@@ -1,7 +1,7 @@
 import cv2
-import json
 import tkinter as tk
 from threading import Thread
+
 from .color_recognition import ColorRecognition
 
 
@@ -19,6 +19,8 @@ class App:
         self.running = False
         self.thread = None
 
+        self.cr = ColorRecognition("src/color_bounds.json")
+
         print("App initialized")
 
     def start_detection(self):
@@ -32,10 +34,6 @@ class App:
             self.thread.join()
 
     def run_detection(self):
-        with open("src/color_bounds.json", "r") as file:
-            color_bounds = json.load(file)
-
-        cr = ColorRecognition(color_bounds)
         cap = cv2.VideoCapture(0)
 
         while self.running and cap.isOpened():
@@ -45,8 +43,8 @@ class App:
 
             cv2.imshow("Webcam", frame)
 
-            processed_frame = cr.detect_color(frame)
-            cv2.imshow("Detected Colors", processed_frame)
+            detected_colors = self.cr.detect_color(frame)
+            cv2.imshow("Detected Colors", detected_colors)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
