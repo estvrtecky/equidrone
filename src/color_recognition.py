@@ -24,11 +24,29 @@ class ColorRecognition:
         except json.JSONDecodeError:
             print(f"An error occurred while decoding JSON file: {self.file_path}")
 
+    def apply_mask(self, hsv: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
+        """
+        Applies a mask to the HSV image based on the provided lower and upper HSV bounds.
+
+        This function handles the case where the hue range wraps around the 0-179 range in HSV color space.
+        """
+        lower_hue = lower[0]
+        upper_hue = upper[0]
+
+        if lower_hue > upper_hue:
+            mask1 = cv2.inRange(hsv, lower, np.array([179, upper[1], upper[2]]))
+            mask2 = cv2.inRange(hsv, np.array([0, lower[1], lower[2]]), upper)
+            mask = cv2.bitwise_or(mask1, mask2)
+        else:
+            mask = cv2.inRange(hsv, lower, upper)
+
+        return mask
+
     def detect_color(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         for lower, upper in self.color_bounds:
-            mask = cv2.inRange(hsv, lower, upper)
+            mask = self.apply_mask(hsv, lower, upper)
             contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             for contour in contours:
