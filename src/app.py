@@ -43,7 +43,7 @@ class App:
 
             cv2.imshow("Webcam", frame)
 
-            detected_colors = self.cr.detect_color(frame)
+            detected_colors = self.cr.detect_colors(frame)
             cv2.imshow("Detected Colors", detected_colors)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):

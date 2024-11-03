@@ -42,10 +42,11 @@ class ColorRecognition:
 
         return mask
 
-    def detect_color(self, frame):
+    def detect_colors(self, frame):
+        frame = frame.copy()
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        for lower, upper in self.color_bounds:
+        for (lower, upper), color_name in zip(self.color_bounds, self.color_names):
             mask = self.apply_mask(hsv, lower, upper)
             contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -54,5 +55,6 @@ class ColorRecognition:
                 if area > 500:
                     x, y, w, h = cv2.boundingRect(contour)
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    cv2.putText(frame, color_name, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
         return frame
