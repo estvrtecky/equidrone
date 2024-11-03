@@ -6,13 +6,23 @@ import numpy as np
 class ColorRecognition:
     def __init__(self, file_path: str):
         self.file_path = file_path
+        self.color_bounds = []
+        self.color_names = []
         self.load_color_bounds()
 
     def load_color_bounds(self) -> None:
-        with open(self.file_path, "r") as file:
-            data = json.load(file)
-            self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in data]
-            self.color_names = [color["name"] for color in data]
+        """
+        Loads color bounds from a JSON file.
+        """
+        try:
+            with open(self.file_path, "r") as file:
+                data = json.load(file)
+                self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in data]
+                self.color_names = [color["name"] for color in data]
+        except FileNotFoundError:
+            print(f"File not found: {self.file_path}")
+        except json.JSONDecodeError:
+            print(f"An error occurred while decoding JSON file: {self.file_path}")
 
     def detect_color(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
