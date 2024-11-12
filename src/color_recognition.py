@@ -4,25 +4,11 @@ import numpy as np
 
 
 class ColorRecognition:
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
         self.file_path = file_path
         self.color_bounds = []
         self.color_names = []
         self.load_color_bounds()
-
-    def load_color_bounds(self) -> None:
-        """
-        Loads color bounds from a JSON file.
-        """
-        try:
-            with open(self.file_path, "r") as file:
-                data = json.load(file)
-                self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in data]
-                self.color_names = [color["name"] for color in data]
-        except FileNotFoundError:
-            print(f"File not found: {self.file_path}")
-        except json.JSONDecodeError:
-            print(f"An error occurred while decoding JSON file: {self.file_path}")
 
     def apply_mask(self, hsv: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
         """
@@ -42,10 +28,11 @@ class ColorRecognition:
 
         return mask
 
-    def detect_colors(self, frame):
+    def detect_colors(self, frame: np.ndarray) -> list[dict]:
         frame = frame.copy()
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
+        detected_colors = []
         for (lower, upper), color_name in zip(self.color_bounds, self.color_names):
             mask = self.apply_mask(hsv, lower, upper)
             contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -54,7 +41,23 @@ class ColorRecognition:
                 area = cv2.contourArea(contour)
                 if area > 500:
                     x, y, w, h = cv2.boundingRect(contour)
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    cv2.putText(frame, color_name, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                    detected_colors.append({
+                        "color": color_name,
+                        "position": (x, y, w, h)
+                    })
 
-        return frame
+        return detected_colors
+
+    def load_color_bounds(self) -> None:
+        """
+        Loads color bounds from a JSON file.
+        """
+        try:
+            with open(self.file_path, "r") as file:
+                data = json.load(file)
+                self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in data]
+                self.color_names = [color["name"] for color in data]
+        except FileNotFoundError:
+            print(f"File not found: {self.file_path}")
+        except json.JSONDecodeError:
+            print(f"An error occurred while decoding JSON file: {self.file_path}")
