@@ -1,0 +1,30 @@
+name: Bug report
+description: Report a bug or unexpected behavior in EquiDrone software.
+title: "Bug: "
+labels: [bug]
+assignees: []
+
+body:
+  - type: textarea
+    attributes:
+      label: "Bug Description"
+      description: "Provide a clear and concise description of the issue. What is happening, and what should happen instead?"
+      placeholder: "Explain the problem and what behavior you expected."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Steps To Reproduce"
+      description: "List the steps to reproduce the issue. Be as specific as possible."
+      placeholder: "1. Go to...\n2. Click on...\n3. Observe the issue..."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Expected behavior"
+      description: "Describe what you expected to happen instead of the observed behavior."
+      placeholder: "What should happen if the bug didn't exist?"
+    validations:
+      required: true

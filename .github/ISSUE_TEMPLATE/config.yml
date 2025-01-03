@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+issue_templates:
+  - name: "Bug report"
+    about: "Report a bug or unexpected behavior in EquiDrone software."
+    template: "bug_report.yml"
+  - name: "Feature request"
+    about: "Suggest a new feature or improvement to enhance EquiDrone software."
+    template: "feature_request.yml"

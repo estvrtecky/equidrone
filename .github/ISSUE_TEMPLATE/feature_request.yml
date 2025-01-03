@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest a new feature or improvement to enhance EquiDrone software.
+title: "Feature: "
+labels: [feature, enhancement]
+assignees: []
+
+body:
+  - type: textarea
+    attributes:
+      label: "Feature Description"
+      description: "Provide a clear and concise description of the feature or enhancement you'd like to suggest."
+      placeholder: "Describe the feature or enhancement you have in mind."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Why is this needed?"
+      description: "Explain why this feature is important. Include use cases, scenarios, or examples of how it should work."
+      placeholder: "Add details about the need for this feature, including relevant examples or scenarios."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Implementation Ideas"
+      description: "If you have suggestions on how to implement this feature, provide them here."
+      placeholder: "Suggest implementation methods, frameworks, or code examples (optional)."
+    validations:
+      required: false
+
+  - type: input
+    attributes:
+      label: "Related Issue(s)"
+      description: "If applicable, reference related issues (e.g., #42)."
+      placeholder: "#123"
+    validations:
+      required: false
