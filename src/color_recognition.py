@@ -35,6 +35,7 @@ class ColorRecognition:
         detected_colors = []
         for (lower, upper), color_name in zip(self.color_bounds, self.color_names):
             mask = self.apply_mask(hsv, lower, upper)
+            mask = self.remove_noise(mask)
             contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
             if contours:
@@ -43,9 +44,13 @@ class ColorRecognition:
                 area = cv2.contourArea(contour)
 
                 if area > 500:
+                    # Create a mask with only the largest contour filled
+                    mask = np.zeros_like(mask)
+                    cv2.drawContours(mask, [contour], -1, (255), thickness=cv2.FILLED)
+
                     x, y, w, h = cv2.boundingRect(contour)
                     detected_colors.append({
-                        "color": color_name,
+                        "name": color_name,
                         "position": (x, y, w, h),
                         "mask": mask
                     })
@@ -65,3 +70,12 @@ class ColorRecognition:
             print(f"File not found: {self.file_path}")
         except json.JSONDecodeError:
             print(f"An error occurred while decoding JSON file: {self.file_path}")
+
+    def remove_noise(self, mask: np.ndarray) -> np.ndarray:
+        """
+        Removes noise from the mask using morphological operations.
+        """
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+        return mask
