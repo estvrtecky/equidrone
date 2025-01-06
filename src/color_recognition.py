@@ -37,13 +37,17 @@ class ColorRecognition:
             mask = self.apply_mask(hsv, lower, upper)
             contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-            for contour in contours:
+            if contours:
+                # Get the largest contour and its area
+                contour = max(contours, key=cv2.contourArea)
                 area = cv2.contourArea(contour)
+
                 if area > 500:
                     x, y, w, h = cv2.boundingRect(contour)
                     detected_colors.append({
                         "color": color_name,
-                        "position": (x, y, w, h)
+                        "position": (x, y, w, h),
+                        "mask": mask
                     })
 
         return detected_colors
