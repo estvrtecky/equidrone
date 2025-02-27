@@ -2,12 +2,17 @@ import cv2
 import json
 import numpy as np
 
+from .utils import Config
+
 
 class ColorRecognition:
-    def __init__(self, file_path: str) -> None:
-        self.file_path = file_path
+    def __init__(self) -> None:
+        self.config = Config("config.ini")
+        self.min_contour_area = self.config.getint("ColorRecognition", "min_contour_area")
+        self.color_bounds_path = self.config.get("ColorRecognition", "color_bounds_path")
         self.color_bounds = []
         self.color_names = []
+
         self.load_color_bounds()
 
     def apply_mask(self, hsv: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
@@ -29,6 +34,13 @@ class ColorRecognition:
         return mask
 
     def detect_colors(self, frame: np.ndarray) -> list[dict]:
+        """
+        Returns a list of detected colors in the frame.
+
+        Each color is represented as a dictionary containing the name of
+        the color, position in the frame, and the mask of the detected
+        color.
+        """
         frame = frame.copy()
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -43,7 +55,7 @@ class ColorRecognition:
                 contour = max(contours, key=cv2.contourArea)
                 area = cv2.contourArea(contour)
 
-                if area > 500:
+                if area > self.min_contour_area:
                     # Create a mask with only the largest contour filled
                     mask = np.zeros_like(mask)
                     cv2.drawContours(mask, [contour], -1, (255), thickness=cv2.FILLED)
@@ -62,14 +74,14 @@ class ColorRecognition:
         Loads color bounds from a JSON file.
         """
         try:
-            with open(self.file_path, "r") as file:
+            with open(self.color_bounds_path, "r") as file:
                 data = json.load(file)
                 self.color_bounds = [(np.array(bound["lower"]), np.array(bound["upper"])) for bound in data]
                 self.color_names = [color["name"] for color in data]
         except FileNotFoundError:
-            print(f"File not found: {self.file_path}")
+            raise FileNotFoundError(f"File not found: {self.color_bounds_path}")
         except json.JSONDecodeError:
-            print(f"An error occurred while decoding JSON file: {self.file_path}")
+            raise ValueError(f"An error occurred while decoding JSON file: {self.color_bounds_path}")
 
     def remove_noise(self, mask: np.ndarray) -> np.ndarray:
         """

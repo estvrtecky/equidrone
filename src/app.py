@@ -20,7 +20,7 @@ class App:
         self.running = False
         self.thread = None
 
-        self.cr = ColorRecognition("src/color_bounds.json")
+        self.cr = ColorRecognition()
         self.sr = ShapeRecognition()
 
         print("App initialized")
