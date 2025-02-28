@@ -1,40 +1,48 @@
 import cv2
-import tkinter as tk
 import numpy as np
+import sys
 from threading import Thread
+from PySide6.QtCore import QObject, Signal, Slot
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtQml import QQmlApplicationEngine
 
 from .color_recognition import ColorRecognition
 from .shape_recognition import ShapeRecognition
 
 
-class App:
-    def __init__(self) -> None:
-        self.root = tk.Tk()
-        self.root.title("Autonomous Drone")
+class App(QObject):
+    def __init__(self):
+        super().__init__()
+        self.app = QGuiApplication()
+        self.engine = QQmlApplicationEngine()
+        self.engine.load("src/ui/main.qml")
 
-        self.start_button = tk.Button(self.root, text="Start Detection", command=self.start_detection)
-        self.start_button.pack()
-
-        self.stop_button = tk.Button(self.root, text="Stop Detection", command=self.stop_detection)
-        self.stop_button.pack()
+        # Check if the QML file is loaded successfully
+        if not self.engine.rootObjects():
+            sys.exit(-1)
 
         self.running = False
-        self.thread = None
+        self.detection_thread = None
 
         self.cr = ColorRecognition()
         self.sr = ShapeRecognition()
 
-        print("App initialized")
+        # Expose the App object to QML
+        self.engine.rootContext().setContextProperty("app", self)
 
+    @Slot()
     def start_detection(self):
-        self.running = True
-        self.thread = Thread(target=self.run_detection)
-        self.thread.start()
+        if not self.running:
+            self.running = True
+            self.detection_thread = Thread(target=self.run_detection)
+            self.detection_thread.start()
 
+    @Slot()
     def stop_detection(self):
-        self.running = False
-        if self.thread:
-            self.thread.join()
+        if self.running:
+            self.running = False
+            if self.detection_thread:
+                self.detection_thread.join()
 
     def run_detection(self):
         cap = cv2.VideoCapture(0)
@@ -80,4 +88,4 @@ class App:
         cv2.destroyAllWindows()
 
     def run(self):
-        self.root.mainloop()
+        sys.exit(self.app.exec())
