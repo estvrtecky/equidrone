@@ -8,6 +8,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 
 from .color_recognition import ColorRecognition
 from .shape_recognition import ShapeRecognition
+from .drone import Drone
 
 
 class App(QObject):
@@ -15,20 +16,26 @@ class App(QObject):
         super().__init__()
         self.app = QGuiApplication()
         self.engine = QQmlApplicationEngine()
-        self.engine.load("src/ui/main.qml")
-
-        # Check if the QML file is loaded successfully
-        if not self.engine.rootObjects():
-            sys.exit(-1)
 
         self.running = False
         self.detection_thread = None
 
         self.cr = ColorRecognition()
         self.sr = ShapeRecognition()
+        self.drone = Drone()
 
-        # Expose the App object to QML
+        # Expose the App object to QML before loading the QML file
         self.engine.rootContext().setContextProperty("app", self)
+
+        # Load the QML file
+        self.engine.load("src/ui/main.qml")
+
+        # Check if the QML file is loaded successfully
+        if not self.engine.rootObjects():
+            print("Failed to load QML file!")
+            sys.exit(-1)
+        else:
+            print("QML file loaded successfully")
 
     @Slot()
     def start_detection(self):
@@ -45,15 +52,13 @@ class App(QObject):
                 self.detection_thread.join()
 
     def run_detection(self):
-        cap = cv2.VideoCapture(0)
+        self.drone.connect()
 
-        while self.running and cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+        while self.running:
+            frame = self.drone.get_frame()
 
             # Display the original frame
-            cv2.imshow("Webcam", frame)
+            cv2.imshow("Drone camera feed", frame)
 
             detected_colors = self.cr.detect_colors(frame)
 
@@ -84,7 +89,6 @@ class App(QObject):
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        cap.release()
         cv2.destroyAllWindows()
 
     def run(self):
