@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import sys
 from threading import Thread
-from PySide6.QtCore import QObject, Signal, Slot
+from PySide6.QtCore import QObject, Signal, Slot, Property, QTimer
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 
@@ -12,6 +12,11 @@ from .drone import Drone
 
 
 class App(QObject):
+    batteryLevelChanged = Signal()
+    heightChanged = Signal()
+    isConnectedChanged = Signal()
+    temperatureChanged = Signal()
+
     def __init__(self):
         super().__init__()
         self.app = QGuiApplication()
@@ -23,6 +28,11 @@ class App(QObject):
         self.cr = ColorRecognition()
         self.sr = ShapeRecognition()
         self.drone = Drone()
+
+        # Timer to update drone info
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self.update_drone_info)
+        self.update_timer.start(1000)
 
         # Expose the App object to QML before loading the QML file
         self.engine.rootContext().setContextProperty("app", self)
@@ -37,25 +47,72 @@ class App(QObject):
         else:
             print("QML file loaded successfully")
 
+    @Property(int, notify=batteryLevelChanged)
+    def battery_level(self):
+        return self.drone.battery
+
+    @Property(int, notify=heightChanged)
+    def height(self):
+        return self.drone.height
+
+    @Property(bool, notify=isConnectedChanged)
+    def is_connected(self):
+        return self.drone.is_connected
+
+    @Property(int, notify=temperatureChanged)
+    def temperature(self):
+        return self.drone.temperature
+
+    def update_drone_info(self):
+        self.batteryLevelChanged.emit()
+        self.temperatureChanged.emit()
+        self.heightChanged.emit()
+
+    @Slot()
+    def connect_drone(self):
+        try:
+            self.drone.connect()
+            self.isConnectedChanged.emit()
+        except Exception as e:
+            print(f"Failed to connect to drone: {e}")
+
+    @Slot()
+    def disconnect_drone(self):
+        try:
+            self.drone.disconnect()
+            self.isConnectedChanged.emit()
+        except Exception as e:
+            print(f"Failed to disconnect from drone: {e}")
+
     @Slot()
     def start_detection(self):
-        if not self.running:
-            self.running = True
-            self.detection_thread = Thread(target=self.run_detection)
-            self.detection_thread.start()
+        if not self.running and self.drone.is_connected:
+            try:
+                self.drone.streamon()
+                self.detection_thread = Thread(target=self.run_detection)
+                self.detection_thread.start()
+                self.running = True
+            except Exception as e:
+                print(f"Failed to start detection: {e}")
 
     @Slot()
     def stop_detection(self):
         if self.running:
             self.running = False
-            if self.detection_thread:
-                self.detection_thread.join()
+            try:
+                if self.detection_thread:
+                    self.detection_thread.join()
+                self.drone.streamoff()
+            except Exception as e:
+                print(f"Failed to stop detection: {e}")
 
     def run_detection(self):
-        self.drone.connect()
-
-        while self.running:
+        while self.running and self.drone.is_connected:
             frame = self.drone.get_frame()
+
+            if frame is None:
+                print("No frame received.")
+                continue
 
             # Display the original frame
             cv2.imshow("Drone camera feed", frame)
