@@ -88,11 +88,12 @@ class App(QObject):
     def start_detection(self):
         if not self.running and self.drone.is_connected:
             try:
+                self.running = True
                 self.drone.streamon()
                 self.detection_thread = Thread(target=self.run_detection)
                 self.detection_thread.start()
-                self.running = True
             except Exception as e:
+                self.running = False
                 print(f"Failed to start detection: {e}")
 
     @Slot()
