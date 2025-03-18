@@ -117,7 +117,19 @@ class App(QObject):
             # Display the original frame
             cv2.imshow("Drone camera feed", frame)
 
+            # Detect colors in the frame
             detected_colors = self.cr.detect_colors(frame)
+
+            # Split detected color masks into black and other colors
+            mask_black = combine_masks(
+                frame.shape[:2],
+                *[color["mask"] for color in detected_colors if color["name"] == "black"]
+            )
+
+            mask_colors = combine_masks(
+                frame.shape[:2],
+                *[color["mask"] for color in detected_colors if color["name"] != "black"]
+            )
 
             # Display detected colors on the frame
             frame_colors = frame.copy()
@@ -127,15 +139,8 @@ class App(QObject):
                 cv2.rectangle(frame_colors, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.imshow("Detected Colors", frame_colors)
 
-            # Combined mask for all detected colors except black
-            mask = np.zeros(frame.shape[:2], dtype=np.uint8)
-            for color in detected_colors:
-                if color["name"] != "black":
-                    mask = cv2.bitwise_or(mask, color["mask"])
-            cv2.imshow("Combined Mask", mask)
-
             # Detect shapes in the combined mask and display it
-            detected_shapes = self.sr.detect_shapes(mask)
+            detected_shapes = self.sr.detect_shapes(mask_colors)
             frame_shapes = frame.copy()
             for shape in detected_shapes:
                 x, y, w, h = shape["position"]
