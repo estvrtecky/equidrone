@@ -3,6 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 
 import "./components"
+import "./views"
 
 ApplicationWindow {
     visible: true
@@ -20,37 +21,37 @@ ApplicationWindow {
         anchors.margins: 16
         color: "transparent"
 
-        Row {
+        Column {
             anchors.fill: parent
             spacing: 16
 
-            // Sidebar
-            Column {
-                width: 280
-                height: parent.height
-                spacing: 24
+            NavBar {
+                id: navbar
+                onHomeClicked: stackView.replace(homeView)
+                onSettingsClicked: stackView.replace(settingsView)
+            }
 
-                // Header
-                Text {
-                    id: appHeader
-                    text: "Autonomous Drone"
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    topPadding: 8
-                    font.pixelSize: 24
-                    color: "#ffffff"
-                    font.weight: Font.Medium
-                }
+            StackView {
+                id: stackView
+                width: parent.width
+                height: parent.height - navbar.height - parent.spacing
+                initialItem: homeView
+            }
 
-                DroneInfoPanel {
-                    id: leftSidebar
-                    width: parent.width
-                    height: parent.height - parent.spacing - appHeader.height
+            Component {
+                id: homeView
+                Home {
+                    width: stackView.width
+                    height: stackView.height
                 }
             }
 
-            ControlPanel {
-                width: parent.width - leftSidebar.width - parent.spacing
-                height: parent.height
+            Component {
+                id: settingsView
+                Settings {
+                    width: stackView.width
+                    height: stackView.height
+                }
             }
         }
     }

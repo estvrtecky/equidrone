@@ -2,83 +2,85 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.15
 
-Rectangle {
-    color: "#2d2d2d"
-    radius: 8
+import "./common"
 
-    Column {
+Item {
+    id: controlPanel
+    width: 800
+    height: parent.height
+
+    Rectangle {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 16
+        color: "#2d2d2d"
+        radius: 8
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: "Control Panel"
-            color: "#ffffff"
-            font.pixelSize: 24
-            font.weight: Font.Medium
-        }
-
-        // Divider
-        Rectangle {
-            width: parent.width
-            height: 1
-            color: "#363636"
-        }
-
-        // Controls
         Column {
-            width: parent.width
-            spacing: 8
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 16
 
-            // Start Detection Button
-            Button {
-                width: parent.width
-                height: 40
-                font.pixelSize: 14
-                font.weight: Font.Medium
-                text: "Start Detection"
-                enabled: app.is_connected
-
-                contentItem: Text {
-                    text: parent.text
-                    font: parent.font
-                    color: "white"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-                background: Rectangle {
-                    color: parent.pressed ? "#1976D2" : "#2196F3"
-                    radius: 5
-                }
-
-                onClicked: app.start_detection()
+            Heading {
+                text: "Control Panel"
             }
 
-            // Stop Detection Button
-            Button {
+            Divider {
+                fillColor: "#363636"
+            }
+
+            // Controls
+            Column {
                 width: parent.width
-                height: 40
-                font.pixelSize: 14
-                font.weight: Font.Medium
-                text: "Stop Detection"
-                enabled: app.is_connected
+                spacing: 8
 
-                contentItem: Text {
-                    text: parent.text
-                    font: parent.font
-                    color: "white"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                // Start Detection Button
+                Button {
+                    id: startDetectionButton
+                    width: parent.width
+                    height: 40
+                    font.pixelSize: 14
+                    text: "Start Detection"
+                    enabled: app.is_connected
+
+                    contentItem: Text {
+                        text: startDetectionButton.text
+                        font: startDetectionButton.font
+                        color: "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        color: startDetectionButton.pressed ? "#1976D2" : "#2196F3"
+                        radius: 5
+                    }
+
+                    onClicked: app.start_detection()
                 }
 
-                background: Rectangle {
-                    color: parent.pressed ? "#d32f2f" : "#f44336"
-                    radius: 5
-                }
+                // Stop Detection Button
+                Button {
+                    id: stopDetectionButton
+                    width: parent.width
+                    height: 40
+                    font.pixelSize: 14
+                    text: "Stop Detection"
+                    enabled: app.is_connected
 
-                onClicked: app.stop_detection()
+                    contentItem: Text {
+                        text: stopDetectionButton.text
+                        font: stopDetectionButton.font
+                        color: "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        color: stopDetectionButton.pressed ? "#d32f2f" : "#f44336"
+                        radius: 5
+                    }
+
+                    onClicked: app.stop_detection()
+                }
             }
         }
     }
