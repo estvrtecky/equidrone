@@ -11,11 +11,11 @@ Item {
     signal settingsClicked()
 
     // Logo
-    Text {
-        id: appLogo
-        text: "Autonomous Drone App"
-        font.pixelSize: 20
-        color: "white"
+    Image {
+        id: logo
+        source: "../assets/logo-neg.png"
+        height: 32
+        width: 32
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: 16

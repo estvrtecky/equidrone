@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from threading import Thread
 from PySide6.QtCore import QObject, Signal, Slot, Property, QTimer
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 
 from .color_recognition import ColorRecognition
@@ -20,6 +20,7 @@ class App(QObject):
     def __init__(self):
         super().__init__()
         self.app = QGuiApplication()
+        self.set_icon("src/ui/assets/logo.png", "src/ui/assets/logo-neg.png")
         self.engine = QQmlApplicationEngine()
 
         self.running = False
@@ -67,6 +68,17 @@ class App(QObject):
         self.batteryLevelChanged.emit()
         self.temperatureChanged.emit()
         self.heightChanged.emit()
+
+    def set_icon(self, light_icon_path: str, dark_icon_path: str) -> None:
+        """Sets the application icon based on the system theme."""
+        palette = self.app.palette()
+        background_color = palette.window().color()
+        is_dark = background_color.lightnessF() < 0.5
+
+        if is_dark:
+            self.app.setWindowIcon(QIcon(dark_icon_path))
+        else:
+            self.app.setWindowIcon(QIcon(light_icon_path))
 
     @Slot()
     def connect_drone(self):
