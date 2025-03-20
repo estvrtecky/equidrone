@@ -9,6 +9,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from .color_recognition import ColorRecognition
 from .shape_recognition import ShapeRecognition
 from .drone import Drone
+from .utils import combine_masks
 
 
 class App(QObject):
