@@ -11,14 +11,29 @@ Item {
     signal settingsClicked()
 
     // Logo
-    Image {
+    Row {
         id: logo
-        source: "../assets/logo-neg.png"
-        height: 32
-        width: 32
+        spacing: 16
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: 16
+
+        Image {
+            id: logoImage
+            source: "../assets/logo-neg.png"
+            height: 32
+            width: 32
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        Text {
+            id: logoText
+            text: "Autonomous Drone"
+            font.pixelSize: 24
+            font.family: "Orbitron"
+            color: "white"
+            anchors.verticalCenter: parent.verticalCenter
+        }
     }
 
     // Navigation buttons

@@ -29,17 +29,47 @@ Item {
                 id: controls
                 width: parent.width
                 height: parent.height - controls.y
+                spacing: 10
 
-                // Camera Feed Button
-                ControlButton {
-                    id: cameraFeedButton
-                    width: 175
-                    buttonText: app.is_processing ? "Camera Feed: On" : "Camera Feed: Off"
-                    buttonEnabled: app.is_connected
-                    buttonTextColor: app.is_processing ? "black" : "white"
-                    buttonBackgroundColor: app.is_processing ? "white" : "#363636"
-                    onButtonClicked: function() {
-                        app.is_processing ? app.stop_feed() : app.start_feed()
+                Row {
+                    id: cameraFeedRow
+                    width: parent.width
+                    spacing: 16
+
+                    ControlButton {
+                        id: cameraFeedButton
+                        width: 175
+                        buttonText: app.is_processing ? "Camera Feed: On" : "Camera Feed: Off"
+                        buttonEnabled: app.is_connected
+                        buttonTextColor: app.is_processing ? "black" : "white"
+                        buttonBackgroundColor: app.is_processing ? "white" : "#363636"
+                        onButtonClicked: function() {
+                            app.is_processing ? app.stop_feed() : app.start_feed()
+                        }
+                    }
+
+                    Text {
+                        id: cameraFeedMode
+                        text: {
+                            if (app.camera_feed_mode === 0) {
+                                return "Camera Feed Mode: Hidden"
+                            } else if (app.camera_feed_mode === 1) {
+                                return "Camera Feed Mode: Visible"
+                            } else if (app.camera_feed_mode === 2) {
+                                return "Camera Feed Mode: Debug"
+                            }
+                        }
+                        color: "white"
+                        font.pixelSize: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Text {
+                        id: autopilotStatus
+                        text: app.is_detecting ? "Autopilot: On" : "Autopilot: Off"
+                        color: "white"
+                        font.pixelSize: 16
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
 

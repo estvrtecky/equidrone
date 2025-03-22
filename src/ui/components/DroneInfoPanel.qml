@@ -1,7 +1,4 @@
 import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
-
 import "./common"
 
 Item {
@@ -50,7 +47,7 @@ Item {
                             width: 8
                             height: 8
                             radius: 4
-                            color: app.is_connected ? "#4CAF50" : "#f44336"
+                            color: app.is_connected ? "#4caf50" : "#f44336"
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
@@ -64,32 +61,22 @@ Item {
                 }
 
                 // Connect/Disconnect Button
-                Button {
+                ControlButton {
                     id: connectButton
                     width: parent.width
-                    height: 40
-                    font.pixelSize: 14
-                    text: app.is_connected ? "Disconnect" : "Connect"
-
-                    contentItem: Text {
-                        text: connectButton.text
-                        font: connectButton.font
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                    buttonText: app.is_connected ? "Disconnect" : "Connect"
+                    buttonTextColor: "white"
+                    buttonTextColorHovered: "white"
+                    buttonTextColorPressed: "white"
+                    buttonBackgroundColor: app.is_connected ? "#f44336" : "#4caf50"
+                    buttonBackgroundColorHovered: app.is_connected ? "#d32f2f" : "#388e3c"
+                    buttonBackgroundColorPressed: app.is_connected ? "#d32f2f" : "#388e3c"
+                    buttonBorderColor: app.is_connected ? "#f44336" : "#4caf50"
+                    buttonBorderColorHovered: app.is_connected ? "#d32f2f" : "#388e3c"
+                    buttonBorderColorPressed: app.is_connected ? "#d32f2f" : "#388e3c"
+                    onButtonClicked: function() {
+                        app.is_connected ? app.disconnect_drone() : app.connect_drone()
                     }
-
-                    background: Rectangle {
-                        color: {
-                            if (connectButton.pressed) {
-                                return app.is_connected ? "#d32f2f" : "#1976D2"
-                            }
-                            return app.is_connected ? "#f44336" : "#2196F3"
-                        }
-                        radius: 5
-                    }
-
-                    onClicked: app.is_connected ? app.disconnect_drone() : app.connect_drone()
                 }
             }
 
@@ -100,13 +87,13 @@ Item {
             InfoCard {
                 label: "Battery Level"
                 value: app.battery_level + "%"
-                valueColor: app.battery_level > 20 ? "#4CAF50" : "#f44336"
+                valueColor: app.battery_level > 20 ? "#4caf50" : "#f44336"
             }
 
             InfoCard {
                 label: "Temperature"
                 value: app.temperature + "°C"
-                valueColor: app.temperature < 60 ? "#4CAF50" : "#f44336"
+                valueColor: app.temperature < 60 ? "#4caf50" : "#f44336"
             }
 
             InfoCard {

@@ -8,10 +8,14 @@ Item {
     property string buttonText: "Button"
     property bool buttonEnabled: true
     property color buttonTextColor: "white"
+    property color buttonTextColorHovered: "black"
     property color buttonTextColorPressed: "black"
-    property color buttonBackgroundColor: "#363636"
-    property color buttonBackgroundColorPressed: "white"
+    property color buttonBackgroundColor: "transparent"
+    property color buttonBackgroundColorHovered: "white"
+    property color buttonBackgroundColorPressed: "#e0e0e0"
     property color buttonBorderColor: "white"
+    property color buttonBorderColorHovered: "white"
+    property color buttonBorderColorPressed: "#e0e0e0"
     property var onButtonClicked: function() {
         console.log("Button clicked")
     }
@@ -30,22 +34,66 @@ Item {
         contentItem: Text {
             text: controlButtonProperties.text
             font: controlButtonProperties.font
-            color: controlButtonProperties.enabled
-                    ? (controlButtonProperties.pressed ? controlButton.buttonTextColorPressed : controlButton.buttonTextColor)
-                    : "#808080"
+            color: {
+                if (controlButtonProperties.enabled) {
+                    if (controlButtonProperties.pressed) {
+                        return controlButton.buttonTextColorPressed
+                    } else if (controlButtonProperties.hovered) {
+                        return controlButton.buttonTextColorHovered
+                    } else {
+                        return controlButton.buttonTextColor
+                    }
+                } else {
+                    return "#808080"
+                }
+            }
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 150
+                }
+            }
         }
 
         background: Rectangle {
-            color: controlButtonProperties.enabled
-                    ? (controlButtonProperties.pressed ? controlButton.buttonBackgroundColorPressed : controlButton.buttonBackgroundColor)
-                    : "#363636"
+            color: {
+                if (controlButtonProperties.enabled) {
+                    if (controlButtonProperties.pressed) {
+                        return controlButton.buttonBackgroundColorPressed
+                    } else if (controlButtonProperties.hovered) {
+                        return controlButton.buttonBackgroundColorHovered
+                    } else {
+                        return controlButton.buttonBackgroundColor
+                    }
+                } else {
+                    return "#363636"
+                }
+            }
             radius: 5
-            border.color: controlButtonProperties.enabled ? controlButton.buttonBorderColor : "#808080"
+            border.color: {
+                if (controlButtonProperties.enabled) {
+                    if (controlButtonProperties.pressed) {
+                        return controlButton.buttonBorderColorPressed
+                    } else if (controlButtonProperties.hovered) {
+                        return controlButton.buttonBorderColorHovered
+                    } else {
+                        return controlButton.buttonBorderColor
+                    }
+                } else {
+                    return "#808080"
+                }
+            }
             border.width: 1
 
             Behavior on color {
+                ColorAnimation {
+                    duration: 150
+                }
+            }
+
+            Behavior on border.color {
                 ColorAnimation {
                     duration: 150
                 }
