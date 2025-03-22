@@ -61,7 +61,7 @@ class Drone:
                 self._is_connected = True
                 raise RuntimeError(f"Failed to disconnect from drone: {e}")
 
-    def get_frame(self) -> np.ndarray:
+    def get_frame(self) -> np.ndarray | None:
         """Returns a frame from the drone's camera.
 
         It converts the frame from RGB to BGR color space for compatibility with OpenCV.

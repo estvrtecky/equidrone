@@ -1,7 +1,4 @@
 import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
-
 import "./common"
 
 Item {
@@ -29,57 +26,46 @@ Item {
 
             // Controls
             Column {
+                id: controls
                 width: parent.width
-                spacing: 8
+                height: parent.height - controls.y
 
-                // Start Detection Button
-                Button {
-                    id: startDetectionButton
-                    width: parent.width
-                    height: 40
-                    font.pixelSize: 14
-                    text: "Start Detection"
-                    enabled: app.is_connected
-
-                    contentItem: Text {
-                        text: startDetectionButton.text
-                        font: startDetectionButton.font
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                // Camera Feed Button
+                ControlButton {
+                    id: cameraFeedButton
+                    width: 175
+                    buttonText: app.is_processing ? "Camera Feed: On" : "Camera Feed: Off"
+                    buttonEnabled: app.is_connected
+                    buttonTextColor: app.is_processing ? "black" : "white"
+                    buttonBackgroundColor: app.is_processing ? "white" : "#363636"
+                    onButtonClicked: function() {
+                        app.is_processing ? app.stop_feed() : app.start_feed()
                     }
-
-                    background: Rectangle {
-                        color: startDetectionButton.pressed ? "#1976D2" : "#2196F3"
-                        radius: 5
-                    }
-
-                    onClicked: app.start_detection()
                 }
 
-                // Stop Detection Button
-                Button {
-                    id: stopDetectionButton
+                // Flight Controls
+                Rectangle {
+                    id: flightControls
                     width: parent.width
-                    height: 40
-                    font.pixelSize: 14
-                    text: "Stop Detection"
-                    enabled: app.is_connected
+                    height: parent.height - flightControls.y
+                    color: "#1e1e1e"
+                    radius: 8
 
-                    contentItem: Text {
-                        text: stopDetectionButton.text
-                        font: stopDetectionButton.font
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: 16
+
+                        // Autopilot Button
+                        ControlButton {
+                            id: autopilotButton
+                            width: parent.width
+                            buttonText: "Autopilot"
+                            buttonEnabled: app.is_processing
+                            onButtonClicked: function() {
+                                app.toggle_autopilot()
+                            }
+                        }
                     }
-
-                    background: Rectangle {
-                        color: stopDetectionButton.pressed ? "#d32f2f" : "#f44336"
-                        radius: 5
-                    }
-
-                    onClicked: app.stop_detection()
                 }
             }
         }
