@@ -9,6 +9,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from .color_recognition import ColorRecognition
 from .shape_recognition import ShapeRecognition
 from .drone import Drone
+from .models import Line
 from .camera_feed import CameraFeed
 from .utils import combine_masks
 
@@ -27,6 +28,7 @@ class App(QObject):
         self.cr = ColorRecognition()
         self.sr = ShapeRecognition()
         self.drone = Drone()
+        self.line = Line()
         self.camera_feed = CameraFeed()
 
         # App UI components
@@ -186,22 +188,52 @@ class App(QObject):
                         cv2.putText(frame_shapes, shape["name"], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                         cv2.rectangle(frame_shapes, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-                    # TODO: Implement line following here
+                    # Line following logic
+                    self.line.update(mask_black)
+                    line_data = self.line.data
+                    offset_x = line_data["center"][0] - frame.shape[1] // 2
+                    offset_x_cm = self.drone.px_to_cm(-offset_x, frame.shape[1])
 
             if self._restart_windows == True:
                 cv2.destroyAllWindows()
                 self._restart_windows = False
 
             # Update and display the camera feed
-            self.camera_feed.frame = frame
             if self.camera_feed.mode == 1:
+                self.camera_feed.frame = frame
                 cv2.imshow("Drone Camera Feed", self.camera_feed.frame)
             elif self.camera_feed.mode == 2 and self._is_detecting:
-                # TODO: Move debug windows to camera feed
-                cv2.imshow("Black Mask", mask_black)
-                cv2.imshow("Colors Mask", mask_colors)
-                cv2.imshow("Detected Colors", frame_colors)
-                cv2.imshow("Detected Shapes", frame_shapes)
+                # Create a copy of the frame for debugging purposes
+                debug_frame = frame.copy()
+
+                # Add masks to highlight all detected colors
+                mask = combine_masks(frame.shape[:2], mask_black, mask_colors)
+                mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+                debug_frame = cv2.addWeighted(mask, 0.75, debug_frame, 0.25, 0)
+
+                # Add crosshair to the center of the frame
+                cv2.line(debug_frame, (frame.shape[1] // 2, 0), (frame.shape[1] // 2, frame.shape[0]), (0, 255, 0), 1)
+                cv2.line(debug_frame, (0, frame.shape[0] // 2), (frame.shape[1], frame.shape[0] // 2), (0, 255, 0), 1)
+
+                # Add information about the line
+                debug_frame = self.line.draw(debug_frame)
+
+                # Visualize offset from the center of the line
+                if line_data["detected"]:
+                    cv2.line(
+                        debug_frame,
+                        (line_data["center"][0], line_data["center"][1] + 10),
+                        (line_data["center"][0] - int(offset_x), line_data["center"][1] + 10),
+                        (0, 0, 255),
+                        2
+                    )
+
+                # Add px and cm above and below the line of the offset
+                cv2.putText(debug_frame, f"{offset_x} px", (line_data["center"][0] - 50, line_data["center"][1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                cv2.putText(debug_frame, f"{offset_x_cm:.2f} cm", (line_data["center"][0] - 50, line_data["center"][1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+                self.camera_feed.frame = debug_frame
+                cv2.imshow("Debug Mode", self.camera_feed.frame)
 
             # TODO: Refactor this to just update the camera feed
             if cv2.waitKey(1) & 0xFF == ord('q'):

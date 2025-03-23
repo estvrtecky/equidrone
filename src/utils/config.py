@@ -13,3 +13,6 @@ class Config:
 
     def getint(self, section: str, option: str) -> int:
         return self.config.getint(section, option)
+
+    def getfloat(self, section: str, option: str) -> float:
+        return self.config.getfloat(section, option)

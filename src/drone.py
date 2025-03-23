@@ -2,11 +2,16 @@ import cv2
 import numpy as np
 from djitellopy import Tello
 
+from .utils import Config
+
 
 class Drone:
     def __init__(self):
+        self.config = Config("config.ini")
+
         self._is_connected = False
         self.drone = None
+        self.fov_horizontal = self.config.getfloat("Drone", "fov_horizontal")
         self._frame_reader = None
 
     @property
@@ -72,6 +77,12 @@ class Drone:
                 return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         return None
 
+    def px_to_cm(self, px: int, frame_width: int) -> float | None:
+        """Converts pixels to centimeters based on the drone's camera FOV and height."""
+        if self._is_connected:
+            w_real = 2 * self.height * np.tan(self.fov_horizontal / 2)
+            return w_real / frame_width * px
+        return None
     def streamon(self):
         """Starts the video stream from the drone."""
         if self._is_connected:
