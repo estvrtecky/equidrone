@@ -9,7 +9,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from .color_recognition import ColorRecognition
 from .shape_recognition import ShapeRecognition
 from .drone import Drone
-from .models import Line
+from .models import Command, Line, Movement, Shape
 from .camera_feed import CameraFeed
 from .utils import combine_masks
 
@@ -30,6 +30,7 @@ class App(QObject):
         self.drone = Drone()
         self.line = Line()
         self.camera_feed = CameraFeed()
+        self.shape_history = []
 
         # App UI components
         self.app = QGuiApplication()
@@ -98,6 +99,17 @@ class App(QObject):
     def temperature(self):
         return self.drone.temperature
 
+    @Slot(str)
+    def command(self, command: str):
+        if command == "land":
+            self.drone.send_command(
+                Command(type="action", action="land")
+            )
+        elif command == "takeoff":
+            self.drone.send_command(
+                Command(type="action", action="takeoff")
+            )
+
     @Slot()
     def connect_drone(self):
         try:
@@ -159,6 +171,12 @@ class App(QObject):
 
                 # Detection logic for autonomous flight
                 if self._is_detecting:
+                    if not self.drone.is_flying:
+                        self.drone.send_command(Command(
+                            type="action",
+                            action="takeoff"
+                        ))
+
                     # Detect colors in the frame
                     detected_colors = self.cr.detect_colors(frame)
 
@@ -191,8 +209,42 @@ class App(QObject):
                     # Line following logic
                     self.line.update(mask_black)
                     line_data = self.line.data
+                    angle = int(self.line.angle)
                     offset_x = line_data["center"][0] - frame.shape[1] // 2
-                    offset_x_cm = self.drone.px_to_cm(-offset_x, frame.shape[1])
+                    offset_x_cm = int(self.drone.px_to_cm(-offset_x, frame.shape[1]))
+
+                    if len(detected_shapes) == 0:
+                        # Movement logic
+                        if self.drone.height < 100:
+                            self.drone.send_command(Command(
+                                type="movement",
+                                movement=Movement(x_axis=0, y_axis=0, z_axis=10, yaw=0)
+                            ))
+                        elif self.drone.height > 150:
+                            self.drone.send_command(Command(
+                                type="movement",
+                                movement=Movement(x_axis=0, y_axis=0, z_axis=(-10), yaw=0)
+                            ))
+                        else:
+                            if line_data["detected"]:
+                                movement = Movement(x_axis=offset_x_cm, y_axis=10, z_axis=0, yaw=angle)
+                                command = Command(type="movement", movement=movement)
+                                self.drone.send_command(command)
+                    else:
+                        for detected_shape in detected_shapes:
+                            shape_pos = detected_shape["position"]
+                            for detected_color in detected_colors:
+                                color_pos = detected_color["position"]
+                                print(shape_pos, color_pos)
+                                if shape_pos == color_pos:
+                                    shape = Shape(
+                                        name=detected_shape["name"],
+                                        color=detected_color["name"]
+                                    )
+                                    print(f"Detected shape: {shape}")
+                                    self.shape_history.append(shape)
+                                    print(f"Shape history: {self.shape_history}")
+                                    break
 
             if self._restart_windows == True:
                 cv2.destroyAllWindows()

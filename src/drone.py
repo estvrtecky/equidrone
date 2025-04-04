@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from djitellopy import Tello
 
+from .models import Command
 from .utils import Config
 
 
@@ -10,6 +11,8 @@ class Drone:
         self.config = Config("config.ini")
 
         self._is_connected = False
+        self._is_flying = False
+
         self.drone = None
         self.fov_horizontal = self.config.getfloat("Drone", "fov_horizontal")
         self._frame_reader = None
@@ -35,6 +38,11 @@ class Drone:
         Returns whether the drone is connected or not.
         """
         return self._is_connected
+
+    @property
+    def is_flying(self) -> bool:
+        """Returns whether the drone is flying or not."""
+        return self._is_flying
 
     @property
     def temperature(self) -> float:
@@ -83,6 +91,30 @@ class Drone:
             w_real = 2 * self.height * np.tan(self.fov_horizontal / 2)
             return w_real / frame_width * px
         return None
+
+    def send_command(self, command: Command) -> str:
+        """Sends a command to the drone."""
+        if self._is_connected:
+            try:
+                command_type = command.type
+                if command_type == "movement":
+                    self.drone.send_rc_control(
+                        command.movement.x_axis,
+                        command.movement.y_axis,
+                        command.movement.z_axis,
+                        command.movement.yaw
+                    )
+                elif command_type == "action":
+                    action = command.action
+                    if action == "takeoff":
+                        self.drone.takeoff()
+                        self._is_flying = True
+                    elif action == "land":
+                        self.drone.land()
+                        self._is_flying = False
+            except Exception as e:
+                raise RuntimeError(f"Failed to send command to drone: {e}")
+
     def streamon(self):
         """Starts the video stream from the drone."""
         if self._is_connected:

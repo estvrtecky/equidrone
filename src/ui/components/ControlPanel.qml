@@ -95,6 +95,28 @@ Item {
                                 app.toggle_autopilot()
                             }
                         }
+
+                        // Land Button
+                        ControlButton {
+                            id: landButton
+                            width: parent.width
+                            buttonText: "Land"
+                            buttonEnabled: app.is_processing
+                            onButtonClicked: function() {
+                                app.command("land")
+                            }
+                        }
+
+                        // Takeoff Button
+                        ControlButton {
+                            id: takeoffButton
+                            width: parent.width
+                            buttonText: "Takeoff"
+                            buttonEnabled: app.is_processing
+                            onButtonClicked: function() {
+                                app.command("takeoff")
+                            }
+                        }
                     }
                 }
             }
