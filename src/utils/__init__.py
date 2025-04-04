@@ -1,2 +1,2 @@
 from .config import Config
-from .mask_utils import combine_masks
+from .mask_utils import *

@@ -11,7 +11,7 @@ from .shape_recognition import ShapeRecognition
 from .drone import Drone
 from .models import Command, Line, Movement, Shape
 from .camera_feed import CameraFeed
-from .utils import combine_masks
+from .utils import combine_masks, gray2bgr
 
 
 class App(QObject):
@@ -260,7 +260,7 @@ class App(QObject):
 
                 # Add masks to highlight all detected colors
                 mask = combine_masks(frame.shape[:2], mask_black, mask_colors)
-                mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+                mask = gray2bgr(mask)
                 debug_frame = cv2.addWeighted(mask, 0.75, debug_frame, 0.25, 0)
 
                 # Add crosshair to the center of the frame

@@ -10,3 +10,7 @@ def combine_masks(dimensions: tuple[int, int], *masks: np.ndarray) -> np.ndarray
         combined_mask = cv2.bitwise_or(combined_mask, mask)
 
     return combined_mask
+
+def gray2bgr(gray: np.ndarray) -> np.ndarray:
+    """Converts a grayscale image to a BGR image."""
+    return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
