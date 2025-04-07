@@ -112,6 +112,12 @@ class App(QObject):
 
     @Slot()
     def connect_drone(self):
+        """Connects to the drone.
+
+        Sends the `connect` command to the drone and emits the
+        `isConnectedChanged` signal to update the UI. Handles exceptions
+        if the connect command fails.
+        """
         try:
             self.drone.connect()
             self.isConnectedChanged.emit()
@@ -120,7 +126,18 @@ class App(QObject):
 
     @Slot()
     def disconnect_drone(self):
+        """Disconnects from the drone.
+
+        If the drone is processing, it stops the feed first. Then it can
+        safely send the `disconnect` command to the drone. This ensures
+        correct cleanup of resources and prevents any potential issues
+        with the camera feed or processing thread. The method also emits
+        the `isConnectedChanged` signal to update the UI. Handles
+        exceptions if the disconnect command fails.
+        """
         try:
+            if self._is_processing:
+                self.stop_feed()
             self.drone.disconnect()
             self.isConnectedChanged.emit()
         except Exception as e:
@@ -128,29 +145,42 @@ class App(QObject):
 
     @Slot()
     def start_feed(self):
-        if not self._is_processing and self.drone.is_connected:
-            try:
-                self._is_processing = True
-                self.drone.streamon()
-                self._processing_thread = Thread(target=self.run_feed)
-                self._processing_thread.start()
-                self.isProcessingChanged.emit()
-            except Exception as e:
-                self._is_processing = False
-                print(f"Failed to start feed: {e}")
+        """Starts the camera feed and processing thread.
+
+        Sends the `streamon` command to the drone and creates a new
+        thread to process the feed. Emits the `isProcessingChanged`
+        signal to update the UI. Handles exceptions if any of the
+        mentioned steps fail.
+        """
+        try:
+            self._is_processing = True
+            self.drone.streamon()
+            self._processing_thread = Thread(target=self.run_feed)
+            self._processing_thread.start()
+        except Exception as e:
+            self._is_processing = False
+            print(f"Failed to start feed: {e}")
+
+        self.isProcessingChanged.emit()
 
     @Slot()
     def stop_feed(self):
-        if self._is_processing:
+        """Stops the camera feed and processing thread.
+
+        Joins the processing thread and sends the `streamoff` command to
+        the drone. Emits the `isProcessingChanged` signal to update the
+        UI. Handles exceptions if any of the mentioned steps fail.
+        """
+        try:
             self._is_processing = False
-            try:
-                if self._processing_thread:
-                    self._processing_thread.join()
-                self.drone.streamoff()
-                self.isProcessingChanged.emit()
-            except Exception as e:
-                self._is_processing = True
-                print(f"Failed to stop feed: {e}")
+            if self._processing_thread:
+                self._processing_thread.join()
+            self.drone.streamoff()
+        except Exception as e:
+            self._is_processing = True
+            print(f"Failed to stop feed: {e}")
+
+        self.isProcessingChanged.emit()
 
     @Slot()
     def toggle_autopilot(self):
