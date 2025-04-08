@@ -101,7 +101,7 @@ Item {
                             id: landButton
                             width: parent.width
                             buttonText: "Land"
-                            buttonEnabled: app.is_processing
+                            buttonEnabled: app.is_connected
                             onButtonClicked: function() {
                                 app.command("land")
                             }
@@ -112,7 +112,7 @@ Item {
                             id: takeoffButton
                             width: parent.width
                             buttonText: "Takeoff"
-                            buttonEnabled: app.is_processing
+                            buttonEnabled: app.is_connected
                             onButtonClicked: function() {
                                 app.command("takeoff")
                             }
