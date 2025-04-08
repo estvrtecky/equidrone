@@ -317,21 +317,13 @@ class App(QObject):
                 cv2.line(debug_frame, (0, frame.shape[0] // 2), (frame.shape[1], frame.shape[0] // 2), (0, 255, 0), 1)
 
                 # Add information about the line
-                debug_frame = self.line.draw(debug_frame)
+                if self.line.detected:
+                    debug_frame = self.line.draw(debug_frame, int(offset_x), offset_x_cm)
 
-                # Visualize offset from the center of the line
-                if line_data["detected"]:
-                    cv2.line(
-                        debug_frame,
-                        (line_data["center"][0], line_data["center"][1] + 10),
-                        (line_data["center"][0] - int(offset_x), line_data["center"][1] + 10),
-                        (0, 0, 255),
-                        2
-                    )
-
-                # Add px and cm above and below the line of the offset
-                cv2.putText(debug_frame, f"{offset_x} px", (line_data["center"][0] - 50, line_data["center"][1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                cv2.putText(debug_frame, f"{offset_x_cm:.2f} cm", (line_data["center"][0] - 50, line_data["center"][1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                for shape in detected_shapes:
+                    x, y, w, h = shape["position"]
+                    cv2.putText(debug_frame, shape["name"], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    cv2.rectangle(debug_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
                 self.camera_feed.frame = debug_frame
                 cv2.imshow("Debug Mode", self.camera_feed.frame)
