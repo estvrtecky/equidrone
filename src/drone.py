@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import time
 from djitellopy import Tello
 
 from .models import Command
@@ -92,26 +93,61 @@ class Drone:
             return w_real / frame_width * px
         return None
 
-    def send_command(self, command: Command) -> str:
+    def send_command(self, command: Command):
         """Sends a command to the drone."""
         if self._is_connected:
             try:
-                command_type = command.type
-                if command_type == "movement":
+                type = command.type
+
+                if type == "movement":
+                    movement = command.movement
                     self.drone.send_rc_control(
-                        command.movement.x_axis,
-                        command.movement.y_axis,
-                        command.movement.z_axis,
-                        command.movement.yaw
+                        movement.x_axis,
+                        movement.y_axis,
+                        movement.z_axis,
+                        movement.yaw
                     )
-                elif command_type == "action":
+
+                elif type == "action":
                     action = command.action
                     if action == "takeoff":
+                        print("Taking off...")
                         self.drone.takeoff()
                         self._is_flying = True
+                        print("Drone successfully took off!")
+
                     elif action == "land":
+                        print("Landing...")
                         self.drone.land()
                         self._is_flying = False
+                        print("Drone successfully landed!")
+
+                    elif action == "shake":
+                        print("Shaking...")
+                        self.drone.rotate_clockwise(45)
+                        time.sleep(0.5)
+                        self.drone.rotate_counter_clockwise(90)
+                        time.sleep(0.5)
+                        self.drone.rotate_counter_clockwise(45)
+
+                    elif action == "jump":
+                        print("Jumping...")
+                        self.drone.move_up(30)
+                        time.sleep(1.5)
+                        self.drone.move_down(30)
+
+                    elif action == "picture":
+                        print("Taking picture...")
+                        frame = self.get_frame()
+                        if frame is not None:
+                            frame = cv2.flip(frame, 0)
+                            cv2.imwrite("picture.jpg", frame)
+                            print("Picture taken and saved as picture.jpg.")
+                        else:
+                            print("Failed to take picture. Frame is None.")
+
+                time.sleep(0.1) # Delay to ensure the command is done
+
             except Exception as e:
                 raise RuntimeError(f"Failed to send command to drone: {e}")
 

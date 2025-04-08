@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import sys
 from threading import Thread
+import time
+
 from PySide6.QtCore import QObject, Signal, Slot, Property, QTimer
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
@@ -31,6 +33,7 @@ class App(QObject):
         self.line = Line()
         self.camera_feed = CameraFeed()
         self.shape_history = []
+        self.unused_shapes = []
 
         # App UI components
         self.app = QGuiApplication()
@@ -102,12 +105,26 @@ class App(QObject):
     @Slot(str)
     def command(self, command: str):
         if command == "land":
+            if self._is_detecting:
+                self.toggle_autopilot()
             self.drone.send_command(
                 Command(type="action", action="land")
             )
         elif command == "takeoff":
             self.drone.send_command(
                 Command(type="action", action="takeoff")
+            )
+        elif command == "shake":
+            self.drone.send_command(
+                Command(type="action", action="shake")
+            )
+        elif command == "jump":
+            self.drone.send_command(
+                Command(type="action", action="jump")
+            )
+        elif command == "picture":
+            self.drone.send_command(
+                Command(type="action", action="picture")
             )
 
     @Slot()
@@ -202,10 +219,7 @@ class App(QObject):
                 # Detection logic for autonomous flight
                 if self._is_detecting:
                     if not self.drone.is_flying:
-                        self.drone.send_command(Command(
-                            type="action",
-                            action="takeoff"
-                        ))
+                        self.command("takeoff")
 
                     # Detect colors in the frame
                     detected_colors = self.cr.detect_colors(frame)
@@ -221,20 +235,19 @@ class App(QObject):
                         *[color["mask"] for color in detected_colors if color["name"] != "black"]
                     )
 
-                    # Display detected colors on the frame
-                    frame_colors = frame.copy()
-                    for color in detected_colors:
-                        x, y, w, h = color["position"]
-                        cv2.putText(frame_colors, color["name"], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                        cv2.rectangle(frame_colors, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
                     # Detect shapes in the combined mask and display it
                     detected_shapes = self.sr.detect_shapes(mask_colors)
-                    frame_shapes = frame.copy()
-                    for shape in detected_shapes:
-                        x, y, w, h = shape["position"]
-                        cv2.putText(frame_shapes, shape["name"], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                        cv2.rectangle(frame_shapes, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    for detected_shape in detected_shapes:
+                        for detected_color in detected_colors:
+                            if self.sr.is_close(detected_shape, detected_color):
+                                shape = Shape(
+                                    name=detected_shape["name"],
+                                    color=detected_color["name"]
+                                )
+                                if shape not in self.unused_shapes:
+                                    self.unused_shapes.append(shape)
+                                    print(f"Detected shape: {shape}")
+                                break
 
                     # Line following logic
                     self.line.update(mask_black)
@@ -243,38 +256,44 @@ class App(QObject):
                     offset_x = line_data["center"][0] - frame.shape[1] // 2
                     offset_x_cm = int(self.drone.px_to_cm(-offset_x, frame.shape[1]))
 
-                    if len(detected_shapes) == 0:
-                        # Movement logic
-                        if self.drone.height < 100:
-                            self.drone.send_command(Command(
-                                type="movement",
-                                movement=Movement(x_axis=0, y_axis=0, z_axis=10, yaw=0)
-                            ))
-                        elif self.drone.height > 150:
-                            self.drone.send_command(Command(
-                                type="movement",
-                                movement=Movement(x_axis=0, y_axis=0, z_axis=(-10), yaw=0)
-                            ))
-                        else:
-                            if line_data["detected"]:
-                                movement = Movement(x_axis=offset_x_cm, y_axis=10, z_axis=0, yaw=angle)
-                                command = Command(type="movement", movement=movement)
-                                self.drone.send_command(command)
+                    if self.unused_shapes:
+                        for unused_shape in self.unused_shapes:
+
+                            # Check if the shape has already been used for an action
+                            if unused_shape in self.shape_history:
+                                continue
+
+                            self.shape_history.append(unused_shape)
+                            if unused_shape.name == "circle" and unused_shape.color == "red":
+                                time.sleep(1)
+                                self.command("shake")
+                            elif unused_shape.name == "rectangle" and unused_shape.color == "blue":
+                                time.sleep(1)
+                                self.command("jump")
+                            elif unused_shape.name == "circle" and unused_shape.color == "green":
+                                time.sleep(1)
+                                self.command("picture")
+                            elif unused_shape.name == "triangle" and unused_shape.color == "red":
+                                time.sleep(1)
+                                self.command("jump")
+                            elif unused_shape.name == "circle" and unused_shape.color == "yellow":
+                                time.sleep(1)
+                                self.command("land")
+
+                        self.unused_shapes.clear()
                     else:
-                        for detected_shape in detected_shapes:
-                            shape_pos = detected_shape["position"]
-                            for detected_color in detected_colors:
-                                color_pos = detected_color["position"]
-                                print(shape_pos, color_pos)
-                                if shape_pos == color_pos:
-                                    shape = Shape(
-                                        name=detected_shape["name"],
-                                        color=detected_color["name"]
-                                    )
-                                    print(f"Detected shape: {shape}")
-                                    self.shape_history.append(shape)
-                                    print(f"Shape history: {self.shape_history}")
-                                    break
+                        # Movement logic
+                        if self.drone.is_flying:
+                            x_axis, y_axis, z_axis = offset_x_cm, 0, 0
+                            if self.drone.height < 100:
+                                z_axis = 10
+                            elif self.drone.height > 120:
+                                z_axis = -10
+                            if line_data["detected"]:
+                                y_axis = 10
+                            movement = Movement(x_axis=x_axis, y_axis=y_axis, z_axis=z_axis, yaw=angle)
+                            command = Command(type="movement", movement=movement)
+                            self.drone.send_command(command)
 
             if self._restart_windows == True:
                 cv2.destroyAllWindows()

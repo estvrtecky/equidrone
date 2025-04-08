@@ -7,6 +7,7 @@ from .utils import Config
 class ShapeRecognition:
     def __init__(self):
         self.config = Config("config.ini")
+        self.frame_boundary = self.config.getint("ShapeRecognition", "frame_boundary")
         self.stability_threshold = self.config.getint("ShapeRecognition", "stability_threshold")
         self.shape_proximity_threshold = self.config.getint("ShapeRecognition", "shape_proximity_threshold")
         self.tracked_shapes = []
@@ -25,6 +26,13 @@ class ShapeRecognition:
             self.tracked_shapes.clear()
 
         for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            frame_width, frame_height = mask.shape[1], mask.shape[0]
+
+            # Check if the shape is within the frame boundaries
+            if not (self.frame_boundary < x and self.frame_boundary < y and (x + w) < (frame_width - self.frame_boundary) and (y + h) < (frame_height - self.frame_boundary)):
+                continue
+
             shape = {
                 "name": self.identify_shape(contour),
                 "position": cv2.boundingRect(contour),
@@ -34,6 +42,7 @@ class ShapeRecognition:
                 self.track_new_shape(shape)
 
             self.increase_counter(shape)
+            self.update_position(shape, cv2.boundingRect(contour))
 
         shapes = [
             shape for shape in self.tracked_shapes if shape["counter"] == self.stability_threshold
@@ -104,3 +113,9 @@ class ShapeRecognition:
                 return
 
         self.tracked_shapes.append(shape)
+
+    def update_position(self, shape: dict, position: tuple) -> None:
+        """Updates the position of a tracked shape."""
+        for tracked_shape in self.tracked_shapes:
+            if shape["name"] == tracked_shape["name"] and self.is_close(shape, tracked_shape):
+                tracked_shape["position"] = position
